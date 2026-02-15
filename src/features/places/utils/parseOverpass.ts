@@ -20,6 +20,14 @@ const parseOverpassElement = (element: OverpassElement): Place | null => {
 
   const category = determineCategory(tags);
 
+  // Try to get image from various OSM tag sources
+  const image =
+    tags.image ||
+    tags['image:wikimedia'] ||
+    tags.wikimedia_commons ||
+    tags['wikimedia:commons'] ||
+    (tags.wikidata ? `https://commons.wikimedia.org/wiki/Special:EntityData/${tags.wikidata}.json` : undefined);
+
   return {
     id: `${element.type}_${element.id}`,
     osmId: element.id,
@@ -35,6 +43,7 @@ const parseOverpassElement = (element: OverpassElement): Place | null => {
     website: tags.website,
     phone: tags.phone,
     openingHours: tags.opening_hours,
+    image,
   };
 };
 

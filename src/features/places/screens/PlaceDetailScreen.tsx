@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Image,
 } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +30,7 @@ export const PlaceDetailScreen: React.FC = () => {
   const isFavorite = useFavoritesStore((s) => s.isFavorite(place.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const addPlanItem = usePlanStore((s) => s.addItem);
+  const totalDays = usePlanStore((s) => s.totalDays);
 
   const category = getCategoryById(place.category);
   const categoryColor = getCategoryColor(place.category);
@@ -61,16 +63,38 @@ export const PlaceDetailScreen: React.FC = () => {
   }, [place.phone]);
 
   const handleAddToPlan = useCallback(() => {
-    addPlanItem({
-      placeId: place.id,
-      placeName: place.name,
-      lat: place.lat,
-      lon: place.lon,
-      category: place.category,
-      day: 1,
-    });
-    Alert.alert('Eklendi', `"${place.name}" 1. gün planına eklendi.`);
-  }, [place, addPlanItem]);
+    if (totalDays === 1) {
+      // Eğer sadece 1 gün varsa direkt ekle
+      addPlanItem({
+        placeId: place.id,
+        placeName: place.name,
+        lat: place.lat,
+        lon: place.lon,
+        category: place.category,
+        day: 1,
+      });
+      Alert.alert('Eklendi', `"${place.name}" 1. gün planına eklendi.`);
+    } else {
+      // Birden fazla gün varsa seçim yap
+      const buttons = Array.from({ length: totalDays }, (_, i) => ({
+        text: `Gün ${i + 1}`,
+        onPress: () => {
+          addPlanItem({
+            placeId: place.id,
+            placeName: place.name,
+            lat: place.lat,
+            lon: place.lon,
+            category: place.category,
+            day: i + 1,
+          });
+          Alert.alert('Eklendi', `"${place.name}" ${i + 1}. gün planına eklendi.`);
+        },
+      }));
+      buttons.push({ text: 'İptal', onPress: () => { }, style: 'cancel' } as any);
+
+      Alert.alert('Hangi güne eklemek istersiniz?', undefined, buttons);
+    }
+  }, [place, addPlanItem, totalDays]);
 
   const handleOpenMap = useCallback(() => {
     const url = `https://www.openstreetmap.org/?mlat=${place.lat}&mlon=${place.lon}#map=17/${place.lat}/${place.lon}`;
@@ -115,6 +139,15 @@ export const PlaceDetailScreen: React.FC = () => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      {/* Image if available */}
+      {place.image && (
+        <Image
+          source={{ uri: place.image }}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      )}
+
       {/* Header card */}
       <View style={[styles.headerCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={[styles.categoryIndicator, { backgroundColor: categoryColor }]} />
@@ -136,9 +169,6 @@ export const PlaceDetailScreen: React.FC = () => {
                 </Text>
               </View>
             )}
-            <Text style={[typography.caption, { color: colors.text.tertiary }]}>
-              {place.osmType} #{place.osmId}
-            </Text>
           </View>
 
           {/* Favorite button */}
@@ -205,7 +235,7 @@ export const PlaceDetailScreen: React.FC = () => {
       {place.tags && Object.keys(place.tags).length > 0 && (
         <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[typography.captionMedium, { color: colors.text.secondary, marginBottom: spacing.sm }]}>
-            OSM Etiketleri
+            Ek Bilgiler
           </Text>
           {Object.entries(place.tags)
             .filter(
@@ -213,22 +243,61 @@ export const PlaceDetailScreen: React.FC = () => {
                 !['name', 'name:en', 'description', 'description:en'].includes(key)
             )
             .slice(0, 10)
-            .map(([key, value]) => (
-              <View key={key} style={styles.tagRow}>
-                <Text
-                  style={[typography.small, { color: colors.text.tertiary, width: 120 }]}
-                  numberOfLines={1}
-                >
-                  {key}
-                </Text>
-                <Text
-                  style={[typography.small, { color: colors.text.secondary, flex: 1 }]}
-                  numberOfLines={1}
-                >
-                  {value}
-                </Text>
-              </View>
-            ))}
+            .map(([key, value]) => {
+              // Translate common OSM tag keys to Turkish
+              const translations: Record<string, string> = {
+                'amenity': 'Tesis Türü',
+                'tourism': 'Turizm',
+                'historic': 'Tarih',
+                'cuisine': 'Mutfak',
+                'wheelchair': 'Engelli Erişimi',
+                'internet_access': 'İnternet',
+                'building': 'Bina',
+                'addr:street': 'Sokak',
+                'addr:housenumber': 'Kapı No',
+                'addr:postcode': 'Posta Kodu',
+                'addr:city': 'Şehir',
+                'religion': 'Din',
+                'denomination': 'Mezhep',
+                'opening_hours': 'Açılış Saatleri',
+                'website': 'Web Sitesi',
+                'phone': 'Telefon',
+                'email': 'E-posta',
+                'architect': 'Mimar',
+                'start_date': 'Başlangıç Tarihi',
+                'heritage': 'Miras',
+                'wikidata': 'Wikidata',
+                'wikipedia': 'Wikipedia',
+                'capacity': 'Kapasite',
+                'fee': 'Ücret',
+                'smoking': 'Sigara',
+                'outdoor_seating': 'Açık Oturma',
+                'takeaway': 'Paket Servis',
+                'delivery': 'Teslimat',
+              };
+
+              const translatedKey = translations[key] || key
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+
+              return (
+                <View key={key} style={styles.tagRow}>
+                  <Text
+                    style={[typography.small, { color: colors.text.tertiary, width: 120 }]}
+                    numberOfLines={1}
+                  >
+                    {translatedKey}
+                  </Text>
+                  <Text
+                    style={[typography.small, { color: colors.text.secondary, flex: 1 }]}
+                    numberOfLines={2}
+                  >
+                    {value === 'yes' ? 'Evet' : value === 'no' ? 'Hayır' : value}
+                  </Text>
+                </View>
+              );
+            })}
         </View>
       )}
 
@@ -257,6 +326,12 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing['5xl'],
+  },
+  image: {
+    width: '100%',
+    height: 220,
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
   },
   headerCard: {
     flexDirection: 'row',

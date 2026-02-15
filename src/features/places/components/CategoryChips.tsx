@@ -34,17 +34,20 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
       >
         <Ionicons
           name={category.icon as any}
-          size={16}
+          size={12}
           color={isSelected ? '#ffffff' : category.color}
         />
         <Text
           style={[
-            typography.captionMedium,
+            typography.small,
             {
               color: isSelected ? '#ffffff' : colors.text.primary,
-              marginLeft: spacing.xs,
+              marginLeft: 3,
+              fontSize: 10,
+              fontWeight: '500',
             },
           ]}
+          numberOfLines={1}
         >
           {category.title}
         </Text>
@@ -72,10 +75,10 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
 });

@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../shared/hooks/useTheme';
 import { spacing, borderRadius } from '../../../shared/theme/spacing';
@@ -28,9 +28,9 @@ const getDistanceKm = (
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const d = R * c;
   return d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`;
@@ -48,6 +48,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
   const isFavorite = useFavoritesStore((s) => s.isFavorite(place.id));
   const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite);
   const addPlanItem = usePlanStore((s) => s.addItem);
+  const totalDays = usePlanStore((s) => s.totalDays);
 
   const distance =
     cityLat && cityLon
@@ -55,15 +56,38 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
       : null;
 
   const handleAddToPlan = useCallback(() => {
-    addPlanItem({
-      placeId: place.id,
-      placeName: place.name,
-      lat: place.lat,
-      lon: place.lon,
-      category: place.category,
-      day: 1,
-    });
-  }, [place, addPlanItem]);
+    if (totalDays === 1) {
+      // Eğer sadece 1 gün varsa direkt ekle
+      addPlanItem({
+        placeId: place.id,
+        placeName: place.name,
+        lat: place.lat,
+        lon: place.lon,
+        category: place.category,
+        day: 1,
+      });
+      Alert.alert('Eklendi', `"${place.name}" 1. gün planına eklendi.`);
+    } else {
+      // Birden fazla gün varsa seçim yap
+      const buttons = Array.from({ length: totalDays }, (_, i) => ({
+        text: `Gün ${i + 1}`,
+        onPress: () => {
+          addPlanItem({
+            placeId: place.id,
+            placeName: place.name,
+            lat: place.lat,
+            lon: place.lon,
+            category: place.category,
+            day: i + 1,
+          });
+          Alert.alert('Eklendi', `"${place.name}" ${i + 1}. gün planına eklendi.`);
+        },
+      }));
+      buttons.push({ text: 'İptal', onPress: () => { }, style: 'cancel' } as any);
+
+      Alert.alert('Hangi güne eklemek istersiniz?', undefined, buttons);
+    }
+  }, [place, addPlanItem, totalDays]);
 
   return (
     <TouchableOpacity

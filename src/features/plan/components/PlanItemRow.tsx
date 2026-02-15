@@ -89,7 +89,7 @@ export const PlanItemRow: React.FC<PlanItemRowProps> = ({ item, index }) => {
             placeholderTextColor={colors.text.tertiary}
             value={item.time || ''}
             onChangeText={handleTimeChange}
-            maxLength={5}
+            maxLength={20}
           />
           <TouchableOpacity
             onPress={() => setShowNote(!showNote)}
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    width: 80,
-    textAlign: 'center',
+    paddingVertical: 4,
+    flex: 1,
+    maxWidth: 130,
   },
   noteToggle: {
     flexDirection: 'row',
