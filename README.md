@@ -31,6 +31,19 @@ Here's what's under the hood (and why I picked each):
 - **react-native-maps** - The map component everyone uses (for good reason)
 - **AsyncStorage** - Local persistence for favorites and plans
 
+## App Design
+
+<p align="center">
+  <img src="https://github.com/EbrarTikit/CityExplorer/blob/master/preview/cityselect.jpg" width="30%" />
+  <img src="https://github.com/EbrarTikit/CityExplorer/blob/master/preview/discovery.jpg" width="30%" />
+  <img src="https://github.com/EbrarTikit/CityExplorer/blob/master/preview/citydetail.jpg" width="30%" />
+</p>
+
+<p align="center">
+  <img src="https://github.com/EbrarTikit/CityExplorer/blob/master/preview/map.jpg" width="30%" />
+  <img src="https://github.com/EbrarTikit/CityExplorer/blob/master/preview/plan.jpg" width="30%" />
+</p>
+
 ### API Services
 
 **Nominatim API** (geocoding):
